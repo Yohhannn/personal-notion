@@ -5,9 +5,11 @@ import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import KanbanCard from './KanbanCard';
 
-const CategoryColumn = ({ category, onAddCard, onCardClick, onDeleteCategory, isOverlay }) => {
+const CategoryColumn = ({ category, onAddCard, onCardClick, onDeleteCategory, onUpdateCategory, isOverlay }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [newCardTitle, setNewCardTitle] = useState('');
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(category.title);
 
   const {
     attributes,
@@ -46,6 +48,15 @@ const CategoryColumn = ({ category, onAddCard, onCardClick, onDeleteCategory, is
     setIsAdding(false);
   };
 
+  const handleTitleSubmit = () => {
+    if (editedTitle.trim() && editedTitle !== category.title) {
+       onUpdateCategory(category.id, editedTitle.trim());
+    } else {
+       setEditedTitle(category.title);
+    }
+    setIsEditingTitle(false);
+  };
+
   const cardIds = useMemo(() => category.cards?.map(c => c.id) || [], [category.cards]);
 
   return (
@@ -55,13 +66,44 @@ const CategoryColumn = ({ category, onAddCard, onCardClick, onDeleteCategory, is
       style={style}
     >
       <div className="category-header" {...attributes} {...listeners}>
-        <h3 className="category-title">{category.title} <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '0.85rem' }}>({category.cards?.length || 0})</span></h3>
+        {isEditingTitle ? (
+          <input
+            type="text"
+            value={editedTitle}
+            onChange={(e) => setEditedTitle(e.target.value)}
+            onBlur={handleTitleSubmit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleTitleSubmit();
+              if (e.key === 'Escape') {
+                 setEditedTitle(category.title);
+                 setIsEditingTitle(false);
+              }
+            }}
+            autoFocus
+            style={{ background: 'transparent', border: '1px solid var(--bg-accent)', color: 'var(--text-main)', fontSize: '1rem', fontWeight: 600, padding: '0 0.25rem', outline: 'none', borderRadius: '4px', width: '70%' }}
+            onPointerDown={e => e.stopPropagation()}
+          />
+        ) : (
+          <h3 
+            className="category-title" 
+            onClick={(e) => { 
+              if (onUpdateCategory) {
+                e.stopPropagation(); 
+                setIsEditingTitle(true);
+              }
+            }}
+            title="Click to edit title"
+            style={{ cursor: onUpdateCategory ? 'text' : 'grab' }}
+          >
+            {category.title} <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '0.85rem' }}>({category.cards?.length || 0})</span>
+          </h3>
+        )}
+
         <button className="icon-btn" onPointerDown={(e) => {
-          // Prevent drag from starting when clicking settings button
           e.stopPropagation();
         }} onClick={() => {
           if(window.confirm(`Delete category "${category.title}"?`)) onDeleteCategory(category.id);
-        }}>
+        }} title="Delete Category">
           <MoreHorizontal size={20} />
         </button>
       </div>

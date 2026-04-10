@@ -9,6 +9,7 @@ const Board = ({
   categories, 
   onAddCategory, 
   onDeleteCategory,
+  onUpdateCategory,
   onAddCard, 
   onUpdateCard,
   onDeleteCard
@@ -51,6 +52,7 @@ const Board = ({
             onAddCard={onAddCard}
             onCardClick={handleCardClick}
             onDeleteCategory={onDeleteCategory}
+            onUpdateCategory={onUpdateCategory}
           />
         ))}
       </SortableContext>

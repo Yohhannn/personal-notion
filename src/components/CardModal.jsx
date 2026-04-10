@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, CheckCircle, Circle } from 'lucide-react';
+import { X, Plus, Trash2, CheckCircle, AlignLeft } from 'lucide-react';
 import { generateId } from '../utils/store';
+import RichTextEditor from './RichTextEditor';
+import TaskItem from './TaskItem';
 
 const CardModal = ({ categoryId, card, onClose, onUpdateCard, onDeleteCard }) => {
   const [title, setTitle] = useState(card.title);
+  const [description, setDescription] = useState(card.description || '');
   const [items, setItems] = useState(card.items || []);
   const [newItemText, setNewItemText] = useState('');
 
@@ -17,31 +20,97 @@ const CardModal = ({ categoryId, card, onClose, onUpdateCard, onDeleteCard }) =>
   }, [onClose]);
 
   const handleSave = () => {
-    onUpdateCard(categoryId, { ...card, title, items });
+    onUpdateCard(categoryId, { ...card, title, description, items });
   };
 
   // Auto-save when items change (excluding uncommitted new items)
   useEffect(() => {
     handleSave();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, items]);
+  }, [title, description, items]);
 
   const handleAddItem = (e) => {
     e.preventDefault();
     if (!newItemText.trim()) return;
-    const newItem = { id: generateId(), text: newItemText.trim(), completed: false };
+    const newItem = { id: generateId(), text: newItemText.trim(), description: '', completed: false, subTasks: [] };
     setItems([...items, newItem]);
     setNewItemText('');
   };
 
-  const toggleItem = (itemId) => {
+  const handleToggleItem = (itemId) => {
     setItems(items.map(item => 
       item.id === itemId ? { ...item, completed: !item.completed } : item
     ));
   };
 
-  const deleteItem = (itemId) => {
+  const handleDeleteItem = (itemId) => {
     setItems(items.filter(item => item.id !== itemId));
+  };
+
+  const handleUpdateItemText = (itemId, newText) => {
+    setItems(items.map(item => 
+      item.id === itemId ? { ...item, text: newText } : item
+    ));
+  };
+
+  const handleUpdateItemDesc = (itemId, newDesc) => {
+    setItems(items.map(item => 
+      item.id === itemId ? { ...item, description: newDesc } : item
+    ));
+  };
+
+  const handleAddSubTask = (itemId, newSubTask) => {
+    setItems(items.map(item => 
+      item.id === itemId ? { ...item, subTasks: [...(item.subTasks || []), newSubTask] } : item
+    ));
+  };
+
+  const handleToggleSubTask = (itemId, subTaskId) => {
+    setItems(items.map(item => {
+      if (item.id === itemId) {
+        return {
+          ...item,
+          subTasks: item.subTasks.map(st => st.id === subTaskId ? { ...st, completed: !st.completed } : st)
+        };
+      }
+      return item;
+    }));
+  };
+
+  const handleDeleteSubTask = (itemId, subTaskId) => {
+    setItems(items.map(item => {
+      if (item.id === itemId) {
+        return {
+          ...item,
+          subTasks: item.subTasks.filter(st => st.id !== subTaskId)
+        };
+      }
+      return item;
+    }));
+  };
+
+  const handleUpdateSubTaskText = (itemId, subTaskId, newText) => {
+    setItems(items.map(item => {
+      if (item.id === itemId) {
+        return {
+          ...item,
+          subTasks: item.subTasks.map(st => st.id === subTaskId ? { ...st, text: newText } : st)
+        };
+      }
+      return item;
+    }));
+  };
+
+  const handleUpdateSubTaskDesc = (itemId, subTaskId, newDesc) => {
+    setItems(items.map(item => {
+      if (item.id === itemId) {
+        return {
+          ...item,
+          subTasks: item.subTasks.map(st => st.id === subTaskId ? { ...st, description: newDesc } : st)
+        };
+      }
+      return item;
+    }));
   };
 
   return (
@@ -61,6 +130,16 @@ const CardModal = ({ categoryId, card, onClose, onUpdateCard, onDeleteCard }) =>
         </div>
         
         <div className="modal-body">
+          <div className="card-description-section" style={{ marginBottom: '2rem' }}>
+            <h4 style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+               <AlignLeft size={16} /> Description
+            </h4>
+            <RichTextEditor 
+              content={description}
+              onChange={setDescription}
+            />
+          </div>
+
           <div className="list-items-container">
             <h4 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                <CheckCircle size={18} className="text-muted" /> Tasks
@@ -71,25 +150,24 @@ const CardModal = ({ categoryId, card, onClose, onUpdateCard, onDeleteCard }) =>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {items.map(item => (
-                  <div key={item.id} className="list-item">
-                    <input 
-                      type="checkbox" 
-                      className="list-item-checkbox" 
-                      checked={item.completed} 
-                      onChange={() => toggleItem(item.id)} 
-                    />
-                    <span className={`list-item-text ${item.completed ? 'completed' : ''}`}>
-                      {item.text}
-                    </span>
-                    <button className="icon-btn danger" onClick={() => deleteItem(item.id)} style={{ padding: 0 }}>
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+                  <TaskItem 
+                    key={item.id}
+                    item={item}
+                    onToggle={handleToggleItem}
+                    onDelete={handleDeleteItem}
+                    onUpdateText={handleUpdateItemText}
+                    onUpdateDesc={handleUpdateItemDesc}
+                    onAddSubTask={handleAddSubTask}
+                    onToggleSubTask={handleToggleSubTask}
+                    onDeleteSubTask={handleDeleteSubTask}
+                    onUpdateSubTaskText={handleUpdateSubTaskText}
+                    onUpdateSubTaskDesc={handleUpdateSubTaskDesc}
+                  />
                 ))}
               </div>
             )}
             
-            <form onSubmit={handleAddItem} className="add-list-item-form">
+            <form onSubmit={handleAddItem} className="add-list-item-form" style={{ marginTop: '1rem' }}>
               <input 
                 type="text" 
                 placeholder="Add a new task..." 

@@ -39,6 +39,15 @@ const KanbanCard = ({ card, categoryId, onCardClick, isOverlay }) => {
       onClick={() => onCardClick(categoryId, card)}
     >
       <h4 className="card-title">{card.title}</h4>
+      
+      {card.description && (
+        <div 
+          className="card-description-preview" 
+          style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.75rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+          dangerouslySetInnerHTML={{ __html: card.description }}
+        />
+      )}
+
       {totalItems > 0 && (
         <div className="card-meta">
           <div className="card-meta-item">

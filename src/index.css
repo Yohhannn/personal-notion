@@ -1,24 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg-color: #0f172a; /* Deep Slate */
-  --bg-color-secondary: #1e293b;
-  --bg-accent: #2dd4bf; /* Teal */
-  --bg-accent-hover: #14b8a6;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --card-bg: rgba(30, 41, 59, 0.7);
-  --card-border: rgba(255, 255, 255, 0.08);
-  --modal-bg: rgba(15, 23, 42, 0.85);
+  --bg-color: #191919; /* Notion Dark Background */
+  --bg-color-secondary: #202020; /* Notion Dark Secondary */
+  --bg-accent: #2eaadc; /* Muted Notion Blue Accent */
+  --bg-accent-hover: #268db8;
+  --text-main: rgba(255, 255, 255, 0.81);
+  --text-muted: rgba(255, 255, 255, 0.44);
+  --card-bg: #202020;
+  --card-border: rgba(255, 255, 255, 0.09);
+  --modal-bg: rgba(25, 25, 25, 0.95);
   
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
   
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
+  --radius-sm: 4px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
 }
 
 * {
@@ -28,12 +28,8 @@
 }
 
 body {
-  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
   background-color: var(--bg-color);
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(45, 212, 191, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
-  background-attachment: fixed;
   color: var(--text-main);
   line-height: 1.5;
   min-height: 100vh;
@@ -42,8 +38,22 @@ body {
 
 #root {
   display: flex;
-  flex-direction: column;
   height: 100vh;
+}
+
+.layout-container {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* Custom Scrollbar */
@@ -76,15 +86,11 @@ p {
 /* Utility Classes */
 .glass-panel {
   background: var(--card-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--card-border);
   border-radius: var(--radius-lg);
 }
 
-.title-glow {
-  text-shadow: 0 0 15px rgba(45, 212, 191, 0.4);
-}
+
 
 /* Forms & Buttons */
 input[type="text"], input[type="password"], textarea {
@@ -420,4 +426,278 @@ button.danger:hover {
 .category-header:active,
 .kanban-card:active {
   cursor: grabbing;
+}
+
+/* Sidebar Styles */
+.app-sidebar {
+  width: 250px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--card-border);
+  background: var(--bg-color-secondary);
+  border-radius: 0;
+}
+
+.sidebar-header {
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.logo-icon {
+  background: linear-gradient(135deg, var(--bg-accent) 0%, rgba(139, 92, 246, 1) 100%);
+  padding: 0.4rem;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.sidebar-content {
+  padding: 1.5rem 1rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sidebar-section-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+  padding-left: 0.5rem;
+}
+
+.workspace-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.workspace-btn {
+  background: transparent;
+  color: var(--text-muted);
+  justify-content: flex-start;
+  padding: 0.5rem;
+  width: 100%;
+}
+
+.workspace-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-main);
+  transform: none;
+}
+
+.workspace-btn.active {
+  background: rgba(45, 212, 191, 0.1);
+  color: var(--bg-accent);
+}
+
+.workspace-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-footer {
+  padding: 1rem;
+  border-top: 1px solid var(--card-border);
+}
+
+.add-workspace-btn {
+  width: 100%;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px dashed var(--card-border);
+}
+
+.add-workspace-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-main);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: none;
+}
+
+/* Tiptap Editor Styles */
+.tiptap-editor-wrapper {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  color: var(--text-main);
+  font-size: 0.875rem;
+  min-height: 100px;
+  cursor: text;
+}
+.tiptap-editor-wrapper:focus-within {
+  border-color: var(--bg-accent);
+  box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.2);
+}
+.tiptap {
+  outline: none;
+}
+.tiptap p.is-editor-empty:first-child::before {
+  content: "Add a more detailed description...";
+  float: left;
+  color: var(--text-muted);
+  pointer-events: none;
+  height: 0;
+}
+.tiptap ul, .tiptap ol {
+  padding-left: 1.25rem;
+  margin: 0.5rem 0;
+}
+.tiptap li {
+  margin: 0.25rem 0;
+}
+
+/* Recursive Tasks */
+.task-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-md);
+  padding: 0.5rem;
+}
+.task-main-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.sub-task-row {
+  opacity: 0.9;
+}
+.task-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.task-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.task-container:hover > .task-main-row > .task-actions,
+.sub-task-row:hover .task-actions {
+  opacity: 1;
+}
+.subtasks-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-left: 1.5rem;
+  padding-left: 0.5rem;
+  border-left: 1px solid var(--card-border);
+  margin-top: 0.5rem;
+}
+.task-text-input {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  font-size: 0.9rem !important;
+  font-weight: 500;
+  box-shadow: none !important;
+}
+.task-text-input:focus {
+  box-shadow: none !important;
+  border-bottom: 1px solid var(--bg-accent) !important;
+  border-radius: 0;
+}
+.task-text-input.completed {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+.task-desc-input {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  font-size: 0.8rem !important;
+  color: var(--text-muted) !important;
+  resize: none;
+  line-height: 1.2;
+}
+.task-desc-input:focus {
+  box-shadow: none !important;
+  color: var(--text-main) !important;
+}
+.collapse-btn {
+  padding: 0.25rem;
+  color: var(--text-muted);
+}
+.add-subtask-form {
+  padding-left: 1.5rem;
+}
+
+/* Mobile Compatibility */
+@media (max-width: 768px) {
+  .layout-container {
+    flex-direction: column;
+  }
+  
+  .app-sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: column;
+    border-right: none;
+    border-bottom: 1px solid var(--card-border);
+  }
+  
+  .sidebar-header {
+    padding: 1rem;
+  }
+  
+  .sidebar-content {
+    display: none; /* Hide sets by default on small screens */
+  }
+
+  /* Alternatively we can show them horizontally, but hiding them or creating a toggle is safer. 
+     For a kanban app, let's show them as a horizontally scrolling list. */
+   .app-sidebar:focus-within .sidebar-content,
+   .app-sidebar:active .sidebar-content {
+     display: block;
+   }
+   
+   .workspace-nav {
+     flex-direction: row;
+     overflow-x: auto;
+     padding-bottom: 0.5rem;
+   }
+   
+   .workspace-btn {
+     width: auto;
+     white-space: nowrap;
+   }
+   
+   .sidebar-footer {
+      display: none;
+   }
+
+  .kanban-board {
+    padding: 1rem;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding: 1rem;
+  }
+  
+  .category-column, .add-category-column {
+    width: 85vw; /* Almost full width but allowing peeking */
+    max-width: 320px;
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+  
+  .modal-content {
+    max-height: 95vh;
+    margin: 1rem;
+    width: auto;
+  }
 }

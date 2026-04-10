@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { getInitialData, saveData } from './utils/store';
+import React, { useState, useEffect, useMemo } from 'react';
+import { getInitialData, saveData, getActiveWorkspaceId, saveActiveWorkspaceId } from './utils/store';
 import Board from './components/Board';
-import { LayoutGrid } from 'lucide-react';
 import { 
   DndContext, 
   DragOverlay, 
@@ -14,35 +13,71 @@ import {
 import { sortableKeyboardCoordinates, arrayMove } from '@dnd-kit/sortable';
 import CategoryColumn from './components/CategoryColumn';
 import KanbanCard from './components/KanbanCard';
+import Sidebar from './components/Sidebar';
 import './index.css';
 
 function App() {
-  const [categories, setCategories] = useState([]);
+  const [workspaces, setWorkspaces] = useState([]);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeId, setActiveId] = useState(null);
   const [activeData, setActiveData] = useState(null);
 
   useEffect(() => {
-    setCategories(getInitialData());
+    const data = getInitialData();
+    setWorkspaces(data);
+    const savedActive = getActiveWorkspaceId();
+    if (savedActive && data.find(w => w.id === savedActive)) {
+      setActiveWorkspaceId(savedActive);
+    } else if (data.length > 0) {
+      setActiveWorkspaceId(data[0].id);
+    }
     setIsLoaded(true);
   }, []);
 
   useEffect(() => {
     if (isLoaded) {
-      saveData(categories);
+      saveData(workspaces);
+      saveActiveWorkspaceId(activeWorkspaceId);
     }
-  }, [categories, isLoaded]);
+  }, [workspaces, activeWorkspaceId, isLoaded]);
+
+  const activeWorkspace = useMemo(() => {
+    return workspaces.find(w => w.id === activeWorkspaceId) || workspaces[0];
+  }, [workspaces, activeWorkspaceId]);
+
+  const handleAddWorkspace = (newWs) => {
+    setWorkspaces([...workspaces, newWs]);
+    setActiveWorkspaceId(newWs.id);
+  };
+
+  const updateActiveWorkspaceCategories = (updater) => {
+    setWorkspaces(prevWorkspaces => prevWorkspaces.map(ws => {
+      if (ws.id === activeWorkspaceId) {
+        const currentCats = ws.categories || [];
+        const newCategories = typeof updater === 'function' ? updater(currentCats) : updater;
+        return { ...ws, categories: newCategories };
+      }
+      return ws;
+    }));
+  };
 
   const handleAddCategory = (newCategory) => {
-    setCategories([...categories, newCategory]);
+    updateActiveWorkspaceCategories(cats => [...cats, newCategory]);
   };
 
   const handleDeleteCategory = (categoryId) => {
-    setCategories(categories.filter(c => c.id !== categoryId));
+    updateActiveWorkspaceCategories(cats => cats.filter(c => c.id !== categoryId));
+  };
+
+  const handleUpdateCategory = (categoryId, newTitle) => {
+    updateActiveWorkspaceCategories(cats => cats.map(c => 
+      c.id === categoryId ? { ...c, title: newTitle } : c
+    ));
   };
 
   const handleAddCard = (categoryId, newCard) => {
-    setCategories(categories.map(c => 
+    updateActiveWorkspaceCategories(cats => cats.map(c => 
       c.id === categoryId 
         ? { ...c, cards: [...(c.cards || []), newCard] } 
         : c
@@ -50,7 +85,7 @@ function App() {
   };
 
   const handleUpdateCard = (categoryId, updatedCard) => {
-    setCategories(categories.map(c => {
+    updateActiveWorkspaceCategories(cats => cats.map(c => {
       if (c.id === categoryId) {
         return {
           ...c,
@@ -62,7 +97,7 @@ function App() {
   };
 
   const handleDeleteCard = (categoryId, cardId) => {
-    setCategories(categories.map(c => {
+    updateActiveWorkspaceCategories(cats => cats.map(c => {
       if (c.id === categoryId) {
         return {
           ...c,
@@ -105,14 +140,12 @@ function App() {
 
     if (!isActiveACard) return;
 
-    // Dragging a Card
-    setCategories(prev => {
+    updateActiveWorkspaceCategories(prev => {
       let activeCategoryIndex = -1;
       let overCategoryIndex = -1;
       let activeCardIndex = -1;
       let overCardIndex = -1;
 
-      // Find the active card's category
       for (let i = 0; i < prev.length; i++) {
         const itemIdx = prev[i].cards?.findIndex(c => c.id === activeId);
         if (itemIdx !== -1 && itemIdx !== undefined) {
@@ -146,11 +179,9 @@ function App() {
       overCategory.cards = [...(overCategory.cards || [])];
 
       if (activeCategoryIndex === overCategoryIndex) {
-        // Same column
         activeCategory.cards = arrayMove(activeCategory.cards, activeCardIndex, overCardIndex);
         updatedCategories[activeCategoryIndex] = activeCategory;
       } else {
-        // Different column
         const [movedCard] = activeCategory.cards.splice(activeCardIndex, 1);
         overCategory.cards.splice(overCardIndex, 0, movedCard);
         
@@ -177,7 +208,7 @@ function App() {
     const isActiveAColumn = active.data.current?.type === 'Column';
 
     if (isActiveAColumn) {
-      setCategories(prev => {
+      updateActiveWorkspaceCategories(prev => {
         const activeCategoryIndex = prev.findIndex(c => c.id === activeId);
         const overCategoryIndex = prev.findIndex(c => c.id === overId);
         if (activeCategoryIndex !== -1 && overCategoryIndex !== -1) {
@@ -191,48 +222,45 @@ function App() {
   if (!isLoaded) return null;
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-    >
-      <header className="app-header glass-panel" style={{ borderTop: 'none', borderLeft: 'none', borderRight: 'none', borderRadius: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{ 
-            background: 'linear-gradient(135deg, var(--bg-accent) 0%, rgba(139, 92, 246, 1) 100%)', 
-            padding: '0.5rem', 
-            borderRadius: 'var(--radius-md)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#fff'
-          }}>
-            <LayoutGrid size={24} />
-          </div>
-          <h1 style={{ margin: 0, fontSize: '1.5rem' }} className="title-glow">Mini Notion</h1>
-        </div>
-      </header>
-
-      <Board 
-        categories={categories}
-        onAddCategory={handleAddCategory}
-        onDeleteCategory={handleDeleteCategory}
-        onAddCard={handleAddCard}
-        onUpdateCard={handleUpdateCard}
-        onDeleteCard={handleDeleteCard}
+    <div className="layout-container">
+      <Sidebar 
+        workspaces={workspaces}
+        activeWorkspaceId={activeWorkspaceId}
+        setActiveWorkspaceId={setActiveWorkspaceId}
+        onAddWorkspace={handleAddWorkspace}
       />
+      
+      <main className="main-content">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          {activeWorkspace && (
+            <Board 
+              categories={activeWorkspace.categories || []}
+              onAddCategory={handleAddCategory}
+              onDeleteCategory={handleDeleteCategory}
+              onUpdateCategory={handleUpdateCategory}
+              onAddCard={handleAddCard}
+              onUpdateCard={handleUpdateCard}
+              onDeleteCard={handleDeleteCard}
+            />
+          )}
 
-      <DragOverlay>
-        {activeId && activeData?.type === 'Column' ? (
-          <CategoryColumn category={activeData.category} isOverlay />
-        ) : null}
-        {activeId && activeData?.type === 'Card' ? (
-          <KanbanCard card={activeData.card} isOverlay />
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+          <DragOverlay>
+            {activeId && activeData?.type === 'Column' ? (
+              <CategoryColumn category={activeData.category} isOverlay />
+            ) : null}
+            {activeId && activeData?.type === 'Card' ? (
+              <KanbanCard card={activeData.card} isOverlay />
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      </main>
+    </div>
   );
 }
 
