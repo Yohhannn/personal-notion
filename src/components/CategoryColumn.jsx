@@ -1,10 +1,35 @@
-import React, { useState } from 'react';
-import { MoreHorizontal, Plus, AlignLeft, CheckSquare } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { MoreHorizontal, Plus } from 'lucide-react';
 import { generateId } from '../utils/store';
+import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import KanbanCard from './KanbanCard';
 
-const CategoryColumn = ({ category, onAddCard, onCardClick, onDeleteCategory }) => {
+const CategoryColumn = ({ category, onAddCard, onCardClick, onDeleteCategory, isOverlay }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [newCardTitle, setNewCardTitle] = useState('');
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: category.id,
+    data: {
+      type: 'Column',
+      category
+    }
+  });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    height: '100%',
+  };
 
   const handleAddCard = (e) => {
     e.preventDefault();
@@ -21,11 +46,20 @@ const CategoryColumn = ({ category, onAddCard, onCardClick, onDeleteCategory }) 
     setIsAdding(false);
   };
 
+  const cardIds = useMemo(() => category.cards?.map(c => c.id) || [], [category.cards]);
+
   return (
-    <div className="category-column">
-      <div className="category-header">
+    <div 
+      className={`category-column ${isOverlay ? 'is-overlay' : ''}`}
+      ref={setNodeRef}
+      style={style}
+    >
+      <div className="category-header" {...attributes} {...listeners}>
         <h3 className="category-title">{category.title} <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '0.85rem' }}>({category.cards?.length || 0})</span></h3>
-        <button className="icon-btn" onClick={() => {
+        <button className="icon-btn" onPointerDown={(e) => {
+          // Prevent drag from starting when clicking settings button
+          e.stopPropagation();
+        }} onClick={() => {
           if(window.confirm(`Delete category "${category.title}"?`)) onDeleteCategory(category.id);
         }}>
           <MoreHorizontal size={20} />
@@ -33,28 +67,16 @@ const CategoryColumn = ({ category, onAddCard, onCardClick, onDeleteCategory }) 
       </div>
       
       <div className="category-cards">
-        {category.cards?.map(card => {
-          const totalItems = card.items?.length || 0;
-          const completedItems = card.items?.filter(i => i.completed)?.length || 0;
-          
-          return (
-            <div 
-              key={card.id} 
-              className="kanban-card glass-panel"
-              onClick={() => onCardClick(category.id, card)}
-            >
-              <h4 className="card-title">{card.title}</h4>
-              {totalItems > 0 && (
-                <div className="card-meta">
-                  <div className="card-meta-item">
-                    <CheckSquare size={14} />
-                    <span>{completedItems}/{totalItems}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+        <SortableContext items={cardIds} strategy={verticalListSortingStrategy}>
+          {category.cards?.map(card => (
+            <KanbanCard 
+              key={card.id}
+              card={card}
+              categoryId={category.id}
+              onCardClick={onCardClick}
+            />
+          ))}
+        </SortableContext>
         
         {isAdding ? (
           <form onSubmit={handleAddCard} className="glass-panel" style={{ padding: '0.75rem', marginTop: '0.75rem' }}>

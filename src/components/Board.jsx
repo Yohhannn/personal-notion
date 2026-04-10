@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import CategoryColumn from './CategoryColumn';
 import CardModal from './CardModal';
 import { Plus } from 'lucide-react';
 import { generateId } from '../utils/store';
+import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 
 const Board = ({ 
   categories, 
@@ -38,17 +39,21 @@ const Board = ({
     setIsAddingCategory(false);
   };
 
+  const categoryIds = useMemo(() => categories.map(c => c.id), [categories]);
+
   return (
     <div className="kanban-board">
-      {categories.map(category => (
-        <CategoryColumn 
-          key={category.id} 
-          category={category} 
-          onAddCard={onAddCard}
-          onCardClick={handleCardClick}
-          onDeleteCategory={onDeleteCategory}
-        />
-      ))}
+      <SortableContext items={categoryIds} strategy={horizontalListSortingStrategy}>
+        {categories.map(category => (
+          <CategoryColumn 
+            key={category.id} 
+            category={category} 
+            onAddCard={onAddCard}
+            onCardClick={handleCardClick}
+            onDeleteCategory={onDeleteCategory}
+          />
+        ))}
+      </SortableContext>
 
       <div className="add-category-column">
         {isAddingCategory ? (
